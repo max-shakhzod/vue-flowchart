@@ -1,0 +1,47 @@
+/* src/assets/nodeStyles.css */
+
+.node-container {
+  background-color: #eff1f3;
+  padding: 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  width: 200px;
+}
+
+.node-header {
+  display: flex;
+  align-items: center;
+}
+
+.node-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+}
+
+.node-title {
+  font-weight: bold;
+  color: #000000;
+  font-size: 12px;
+}
+
+.node-description {
+  color: #000000;
+  font-size: 12px;
+}
+
+.attachment {
+  margin-top: 5px;
+}
+
+.attachment-image {
+  max-width: 100%;
+  border-radius: 5px;
+}
+
+/* Style for horizontal lines within the node container */
+.node-container hr {
+  border: none;
+  border-top: 1px solid #000000; /* Black color */
+  margin: 8px 0;
+}
