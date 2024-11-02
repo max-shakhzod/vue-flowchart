@@ -1,7 +1,7 @@
+<!-- src/components/nodes/DateTimeNode.vue -->
 <template>
   <div class="node">
-    <h3>{{ formattedConnectorType }}</h3>
-    <!-- Additional content can go here -->
+    <span>{{ formattedConnectorType }}</span>
   </div>
 </template>
 
@@ -26,12 +26,12 @@ export default {
 
 <style scoped>
 .node {
-  width: 40px;
+  width: 50px;
   font-size: 7px;
   color: #ffffff;
-  padding: 1px;
+  padding: 5px;
   border: 1px solid #ccc;
   border-radius: 40%;
-  background-color: #3778e2;
+  background-color: #0d6efd;
 }
 </style>

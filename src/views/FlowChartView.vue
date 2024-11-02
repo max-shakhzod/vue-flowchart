@@ -1,8 +1,17 @@
-src/views/FlowChartView.vue
+<!-- src/views/FlowChartView.vue -->
 
 <template>
   <div class="flow-chart-view">
+    <button
+      type="button"
+      class="btn btn-primary"
+      @click="showCreateNodeModal = true"
+    >
+      Create New Node
+    </button>
+
     <vue-flow
+      @node-click="openDrawer"
       @nodeDragStart="onNodeDrag"
       @nodeDrag="onNodeDrag"
       @nodeDragStop="onNodeDrag"
@@ -13,6 +22,14 @@ src/views/FlowChartView.vue
     >
       <Background pattern-color="#aaa" :gap="8" />
     </vue-flow>
+
+    <CreateNodeModal v-model:show="showCreateNodeModal" />
+    <NodeDetailsDrawer
+      v-if="selectedNodeId"
+      :show="showNodeDrawer"
+      :nodeId="selectedNodeId"
+      @update:show="showNodeDrawer = false"
+    />
   </div>
 </template>
 
@@ -25,17 +42,27 @@ import SendMessageNode from '../components/nodes/SendMessageNode.vue'
 import BusinessHoursNode from '../components/nodes/BusinessHoursNode.vue'
 import DateTimeConnectorNode from '../components/nodes/DateTimeConnectorNode.vue'
 import AddCommentNode from '../components/nodes/AddCommentNode.vue'
-import payload from '../data/payload.json' // Adjust the import path accordingly
+import CreateNodeModal from '@/components/ui/CreateNodeModal.vue'
+import NodeDetailsDrawer from '@/components/ui/NodeDetailsDrawer.vue'
+// import payload from '../data/payload.json'
+import { useFlowStore } from '../stores/useFlowStore'
 
 export default defineComponent({
   name: 'FlowChartView',
   components: {
     VueFlow,
     Background,
+    CreateNodeModal,
+    NodeDetailsDrawer,
   },
   setup() {
     const nodes = ref([])
     const edges = ref([])
+    const showCreateNodeModal = ref(false)
+    const showNodeDrawer = ref(false)
+    const selectedNodeId = ref(null)
+
+    const flowStore = useFlowStore()
 
     const nodeTypes = {
       trigger: markRaw(TriggerNode),
@@ -45,51 +72,53 @@ export default defineComponent({
       addComment: markRaw(AddCommentNode),
     }
 
-    // Define fixed positions in a mapping object
     const positionMap = {
       1: { x: 400, y: 50 }, // Trigger Node
       d09c08: { x: 400, y: 200 }, // Business Hours Node
       '161f52': { x: 200, y: 300 }, // Success Node
       '28c4b9': { x: 750, y: 300 }, // Failure Node
-      b0653a: { x: 112, y: 450 }, // Welcome Message Node
-      b6a0c1: { x: 662, y: 400 }, // Away Message Node
-      e879e4: { x: 662, y: 550 }, // Add Comment Node
+      b0653a: { x: 125, y: 400 }, // Welcome Message Node
+      b6a0c1: { x: 675, y: 400 }, // Away Message Node
+      e879e4: { x: 675, y: 550 }, // Add Comment Node
     }
 
     onMounted(() => {
-      try {
-        // Load elements from the payload JSON
-        const elements = payload || [] // Fallback to empty array if payload is falsy
+      flowStore.loadElements() // Load elements from the store
+      const elements = flowStore.elements || []
 
-        if (!Array.isArray(elements) || elements.length === 0) {
-          console.error('Payload is empty or not an array:', elements)
-          return // Exit early if the payload is invalid
-        }
-
-        // Create nodes from payload with specific positions
-        nodes.value = elements.map(({ id, type, data }) => ({
-          id,
-          type,
-          data,
-          position: positionMap[id] || { x: 0, y: 0 }, // Default position if not found
-        }))
-
-        // Create edges based on parent-child relationships
-        edges.value = elements
-          .filter(({ parentId }) => parentId !== -1) // Filter out root node
-          .map(({ id, parentId }) => ({
-            id: `e${parentId}-${id}`, // Unique ID for the edge
-            source: parentId.toString(),
-            target: id,
-            animated: true,
-          }))
-      } catch (error) {
-        console.error('Error loading payload:', error)
+      if (!Array.isArray(elements) || elements.length === 0) {
+        console.error('Payload is empty or not an array:', elements)
+        return
       }
+
+      nodes.value = elements.map(({ id, type, data }) => ({
+        id,
+        type,
+        data,
+        position: positionMap[id] || { x: 0, y: 0 },
+      }))
+
+      edges.value = elements
+        .filter(({ parentId }) => parentId !== -1)
+        .map(({ id, parentId }) => ({
+          id: `e${parentId}-${id}`,
+          source: parentId.toString(),
+          target: id,
+          animated: true,
+        }))
     })
 
     const onNodeDrag = event => {
       console.log('Node is being dragged:', event)
+    }
+
+    const openDrawer = ({ node }) => {
+      // Access the actual node data
+      const nodeData = node // This should contain the actual node info
+      console.log('Clicked node data:', nodeData) // Log the actual node data
+
+      selectedNodeId.value = nodeData.id // Set the selectedNodeId
+      showNodeDrawer.value = true // Open the drawer
     }
 
     return {
@@ -97,6 +126,10 @@ export default defineComponent({
       edges,
       nodeTypes,
       onNodeDrag,
+      showCreateNodeModal,
+      showNodeDrawer,
+      selectedNodeId,
+      openDrawer,
     }
   },
 })
