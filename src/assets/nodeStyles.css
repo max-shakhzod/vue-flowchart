@@ -8,6 +8,55 @@
   width: 200px;
 }
 
+.node-wrapper {
+  position: relative; /* Allow for absolute positioning of button */
+  margin-bottom: 0; /* Remove bottom margin to eliminate gap */
+}
+
+/* Style for the button */
+.add-button {
+  position: absolute; /* Positioning for alignment */
+  top: calc(
+    100% + 30px
+  ); /* Increase this value to add more space above the button */
+  left: 50%; /* Center horizontally */
+  transform: translateX(-50%); /* Centering transform */
+  z-index: 1; /* Ensure button is above the connector */
+}
+
+.add-node-button {
+  background-color: #007bff; /* Button color */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Connector line */
+.connector {
+  position: absolute;
+  top: 100%; /* Align it directly at the bottom of the node */
+  left: 50%; /* Center horizontally */
+  width: 2px; /* Adjust width of the line */
+  height: 15px; /* Adjust height as needed */
+  background-color: #000; /* Color of the connector line */
+  transform: translateX(-50%); /* Centering transform */
+}
+
+.node {
+  width: 50px;
+  font-size: 7px;
+  color: #ffffff;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 40%;
+  background-color: #0d6efd;
+  text-align: center;
+}
+
 .node-header {
   display: flex;
   align-items: center;

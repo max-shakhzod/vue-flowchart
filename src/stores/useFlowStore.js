@@ -1,6 +1,8 @@
 // src/store/useFlowStore.js
+
 import { defineStore } from 'pinia'
 import nodesData from '@/data/payload.json'
+import { v4 as uuidv4 } from 'uuid'
 
 export const useFlowStore = defineStore('flow', {
   state: () => ({
@@ -10,15 +12,19 @@ export const useFlowStore = defineStore('flow', {
   actions: {
     loadElements() {
       this.elements = nodesData.map(node => ({
-        id: node.id,
+        id: node.id || uuidv4(), // Generate an ID if not present in the payload
         type: node.type,
         data: node.data,
-        parentId: node.parentId,
+        parentId: node.parentId || null, // Default to null if parentId is missing
         name: node.name,
       }))
     },
     addNode(node) {
-      const newNode = { ...node, id: Date.now().toString(), parentId: null }
+      const newNode = {
+        ...node,
+        id: node.id || uuidv4(),
+        parentId: node.parentId || null,
+      }
       this.elements.push(newNode)
     },
     updateNode(updatedNode) {

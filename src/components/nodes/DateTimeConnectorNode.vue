@@ -1,13 +1,26 @@
 <!-- src/components/nodes/DateTimeNode.vue -->
 <template>
-  <div class="node">
-    <span>{{ formattedConnectorType }}</span>
+  <div class="node-wrapper">
+    <div class="node">
+      <span>{{ formattedConnectorType }}</span>
+    </div>
+    <!-- Add the "+" button below the node, passing the current node's ID as parentId -->
+    <AddNodeButton
+      :parentId="validParentId"
+      @open-modal="openCreateNodeModal"
+      class="add-button"
+    />
   </div>
 </template>
 
 <script>
+import AddNodeButton from './AddNodeButton.vue'
+
 export default {
   name: 'DateTimeConnectorNode',
+  components: {
+    AddNodeButton,
+  },
   props: {
     data: {
       type: Object,
@@ -20,18 +33,19 @@ export default {
       const type = this.data.connectorType
       return type.charAt(0).toUpperCase() + type.slice(1)
     },
+    validParentId() {
+      // Check if data.id is valid; return -1 if not
+      return this.data.id !== undefined && this.data.id !== null
+        ? this.data.id
+        : -1
+    },
+  },
+  methods: {
+    openCreateNodeModal() {
+      const parentId = this.validParentId
+      console.log('DateTimeConnectorNode parentId:', parentId)
+      this.$emit('open-create-node-modal', { parentId })
+    },
   },
 }
 </script>
-
-<style scoped>
-.node {
-  width: 50px;
-  font-size: 7px;
-  color: #ffffff;
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 40%;
-  background-color: #0d6efd;
-}
-</style>

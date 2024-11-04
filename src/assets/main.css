@@ -1,4 +1,4 @@
-/* @import './base.css';
+@import './base.css';
 
 /* these are necessary styles for vue flow */
 @import '@vue-flow/core/dist/style.css';
@@ -41,4 +41,4 @@ a,
     grid-template-columns: 1fr 1fr;
     padding: 0 2rem;
   }
-} */
+}

@@ -1,29 +1,30 @@
 <!-- src/views/FlowChartView.vue -->
 
 <template>
-  <div class="flow-chart-view">
-    <button
-      type="button"
-      class="btn btn-primary"
-      @click="showCreateNodeModal = true"
-    >
-      Create New Node
-    </button>
+  <div class="flow-chart-container">
+    <div class="flow-chart-view">
+      <vue-flow
+        @node-click="openDrawer"
+        @nodeDragStart="onNodeDrag"
+        @nodeDrag="onNodeDrag"
+        @nodeDragStop="onNodeDrag"
+        :nodes="nodes"
+        :edges="edges"
+        :node-types="nodeTypes"
+        :edge-options="{ type: 'straight' }"
+        fit-view
+      >
+        <Background pattern-color="#aaa" :gap="12" />
+      </vue-flow>
+    </div>
 
-    <vue-flow
-      @node-click="openDrawer"
-      @nodeDragStart="onNodeDrag"
-      @nodeDrag="onNodeDrag"
-      @nodeDragStop="onNodeDrag"
-      :nodes="nodes"
-      :edges="edges"
-      :node-types="nodeTypes"
-      :edge-options="{ type: 'straight' }"
-    >
-      <Background pattern-color="#aaa" :gap="8" />
-    </vue-flow>
+    <CreateNodeModal
+      :show="showCreateNodeModal"
+      @close="showCreateNodeModal = false"
+      @create="handleCreateNode"
+      :parentId="currentParentId"
+    />
 
-    <CreateNodeModal v-model:show="showCreateNodeModal" />
     <NodeDetailsDrawer
       v-if="selectedNodeId"
       :show="showNodeDrawer"
@@ -34,7 +35,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted, markRaw } from 'vue'
+import { defineComponent, ref, onMounted, markRaw, watch } from 'vue'
 import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import TriggerNode from '../components/nodes/TriggerNode.vue'
@@ -44,7 +45,6 @@ import DateTimeConnectorNode from '../components/nodes/DateTimeConnectorNode.vue
 import AddCommentNode from '../components/nodes/AddCommentNode.vue'
 import CreateNodeModal from '@/components/ui/CreateNodeModal.vue'
 import NodeDetailsDrawer from '@/components/ui/NodeDetailsDrawer.vue'
-// import payload from '../data/payload.json'
 import { useFlowStore } from '../stores/useFlowStore'
 
 export default defineComponent({
@@ -61,6 +61,7 @@ export default defineComponent({
     const showCreateNodeModal = ref(false)
     const showNodeDrawer = ref(false)
     const selectedNodeId = ref(null)
+    const currentParentId = ref(null)
 
     const flowStore = useFlowStore()
 
@@ -73,52 +74,69 @@ export default defineComponent({
     }
 
     const positionMap = {
-      1: { x: 400, y: 50 }, // Trigger Node
-      d09c08: { x: 400, y: 200 }, // Business Hours Node
-      '161f52': { x: 200, y: 300 }, // Success Node
-      '28c4b9': { x: 750, y: 300 }, // Failure Node
-      b0653a: { x: 125, y: 400 }, // Welcome Message Node
-      b6a0c1: { x: 675, y: 400 }, // Away Message Node
-      e879e4: { x: 675, y: 550 }, // Add Comment Node
+      1: { x: 400, y: 50 },
+      d09c08: { x: 400, y: 200 },
+      '161f52': { x: 200, y: 300 },
+      '28c4b9': { x: 750, y: 300 },
+      b0653a: { x: 125, y: 400 },
+      b6a0c1: { x: 675, y: 400 },
+      e879e4: { x: 675, y: 600 },
     }
 
     onMounted(() => {
-      flowStore.loadElements() // Load elements from the store
-      const elements = flowStore.elements || []
+      flowStore.loadElements()
+      updateNodesAndEdges(flowStore.elements)
+    })
 
-      if (!Array.isArray(elements) || elements.length === 0) {
-        console.error('Payload is empty or not an array:', elements)
-        return
-      }
+    watch(
+      () => flowStore.elements,
+      newElements => {
+        updateNodesAndEdges(newElements)
+      },
+      { immediate: true },
+    )
 
-      nodes.value = elements.map(({ id, type, data }) => ({
+    function updateNodesAndEdges(elements) {
+      nodes.value = elements.map(({ id, type, name, data }) => ({
         id,
         type,
-        data,
+        data: { ...data, name },
         position: positionMap[id] || { x: 0, y: 0 },
       }))
 
       edges.value = elements
-        .filter(({ parentId }) => parentId !== -1)
+        .filter(({ parentId }) => parentId && parentId !== -1)
         .map(({ id, parentId }) => ({
           id: `e${parentId}-${id}`,
           source: parentId.toString(),
           target: id,
           animated: true,
         }))
-    })
+    }
+
+    function handleCreateNode(newNode) {
+      flowStore.addNode(newNode)
+      updateNodesAndEdges(flowStore.elements)
+    }
 
     const onNodeDrag = event => {
       console.log('Node is being dragged:', event)
     }
 
     const openDrawer = ({ node }) => {
-      // Access the actual node data
-      const nodeData = node // This should contain the actual node info
-      console.log('Clicked node data:', nodeData) // Log the actual node data
+      if (node.type === 'trigger') {
+        openCreateNodeModal(node.id) // Pass the trigger node's ID directly
+      } else if (node.type === 'sendMessage' || node.type === 'addComment') {
+        return // Do not open the modal for these node types
+      } else {
+        selectedNodeId.value = node.id
+        showNodeDrawer.value = true
+      }
+    }
 
-      selectedNodeId.value = nodeData.id // Set the selectedNodeId
-      showNodeDrawer.value = true // Open the drawer
+    const openCreateNodeModal = parentId => {
+      currentParentId.value = parentId || null // Set it directly
+      showCreateNodeModal.value = true
     }
 
     return {
@@ -130,15 +148,30 @@ export default defineComponent({
       showNodeDrawer,
       selectedNodeId,
       openDrawer,
+      handleCreateNode,
+      openCreateNodeModal,
+      currentParentId,
     }
   },
 })
 </script>
 
 <style scoped>
-.flow-chart-view {
+.flow-chart-container {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  height: 90vh;
+  height: 100vh;
   background-color: #fbfbfb;
+}
+
+.flow-chart-view {
+  flex: 1;
+  display: flex;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 </style>
