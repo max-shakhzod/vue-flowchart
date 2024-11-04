@@ -28,12 +28,11 @@
                 class="form-control"
                 id="nodeTitle"
                 v-model="nodeTitle"
-                :readonly="nodeType === 'sendMessage'"
                 required
               />
             </div>
             <div class="form-group">
-              <label for="nodeDescription">Description</label>
+              <label for="nodeDescription">Message</label>
               <input
                 type="text"
                 class="form-control"
@@ -44,21 +43,16 @@
             </div>
             <div class="form-group">
               <label for="nodeType">Node Type</label>
-              <div class="input-group">
-                <select
-                  class="form-control"
-                  id="nodeType"
-                  v-model="nodeType"
-                  @change="updateTitle"
-                >
-                  <option value="sendMessage">Send Message</option>
-                  <option value="addComment">Add Comments</option>
-                  <option value="businessHours">Business Hours</option>
-                </select>
-                <span class="arrow-icon">
-                  <img src="@/assets/icons/arrow-down.svg" alt="Arrow down" />
-                </span>
-              </div>
+              <select
+                class="form-control"
+                id="nodeType"
+                v-model="nodeType"
+                @change="updateTitle"
+              >
+                <option value="sendMessage">Send Message</option>
+                <option value="addComment">Add Comments</option>
+                <option value="businessHours">Business Hours</option>
+              </select>
             </div>
             <div v-if="nodeType === 'sendMessage'" class="form-group">
               <label for="messageSubtype">Message Type</label>
@@ -71,18 +65,6 @@
                 <option value="away">Away Message</option>
                 <option value="welcome">Welcome Message</option>
               </select>
-            </div>
-            <div
-              v-if="nodeType === 'sendMessage' && messageSubtype === 'welcome'"
-              class="form-group"
-            >
-              <label for="attachment">Attachment</label>
-              <input
-                type="file"
-                class="form-control"
-                id="attachment"
-                @change="handleAttachment"
-              />
             </div>
             <div class="text-danger" v-if="errorMessage">
               {{ errorMessage }}
@@ -104,6 +86,7 @@
 
 <script>
 import { v4 as uuidv4 } from 'uuid'
+import { useFlowStore } from '@/stores/useFlowStore'
 
 export default {
   props: {
@@ -114,20 +97,18 @@ export default {
   },
   data() {
     return {
-      nodeTitle: 'Send Message', // Default title based on type
+      nodeTitle: 'Add Comment', // Default title
       nodeDescription: '',
-      nodeType: 'sendMessage',
+      nodeType: 'addComment', // Default to 'Add Comments'
       messageSubtype: 'away', // Default subtype for sendMessage
       errorMessage: '',
-      attachment: null, // To handle file input for attachments
     }
   },
   methods: {
     hideModal() {
-      this.$emit('close') // Emit close event to parent
+      this.$emit('close')
     },
     updateTitle() {
-      // Update title based on nodeType and messageSubtype
       if (this.nodeType === 'sendMessage') {
         this.nodeTitle =
           this.messageSubtype === 'away' ? 'Away Message' : 'Welcome Message'
@@ -137,47 +118,66 @@ export default {
         this.nodeTitle = 'Business Hours'
       }
     },
-    handleAttachment(event) {
-      this.attachment = event.target.files[0]
-    },
     createNode() {
+      // Check if required fields are filled
       if (!this.nodeTitle || !this.nodeDescription) {
         this.errorMessage = 'Title and Description are required.'
         return
       }
 
+      const flowStore = useFlowStore()
+      const existingTitles = flowStore.elements.map(node => node.data.name)
+
+      let uniqueTitle = this.nodeTitle
+      let count = 1
+
+      while (existingTitles.includes(uniqueTitle)) {
+        uniqueTitle = `${this.nodeTitle} (${count})`
+        count++
+      }
+
       const newNode = {
         id: uuidv4(),
-        title: this.nodeTitle,
-        description: this.nodeDescription,
+        name: uniqueTitle,
         type: this.nodeType,
         data: {
-          payload: [],
-          attachment: this.attachment,
+          payload: [], // Initialize payload
         },
       }
 
-      // Adjust data for business hours
+      // Initialize payload based on node type
       if (this.nodeType === 'businessHours') {
-        newNode.type = 'dateTime' // Match payload structure for business hours
-        newNode.data.times = []
+        newNode.type = 'dateTime' // Change type for business hours
+        newNode.data.times = [] // Initialize times
+      } else if (this.nodeType === 'addComment') {
+        newNode.data.comment = this.nodeDescription // Store description as comment
+      } else if (this.nodeType === 'sendMessage') {
+        newNode.data.payload.push({
+          type: 'text',
+          text: this.nodeDescription, // Use description as text for message
+        })
       }
 
-      this.$emit('create', newNode) // Emit the new node data to parent
-      this.hideModal() // Close the modal
-      this.resetFields() // Clear the input fields
+      this.$emit('create', newNode)
+      this.hideModal()
+      this.resetFields()
     },
     resetFields() {
-      this.nodeTitle = 'Send Message'
+      this.nodeTitle = 'Add Comment'
       this.nodeDescription = ''
-      this.nodeType = 'sendMessage'
+      this.nodeType = 'addComment'
       this.messageSubtype = 'away'
       this.errorMessage = ''
-      this.attachment = null // Clear attachment
     },
   },
 }
 </script>
+
+<style scoped>
+.text-danger {
+  color: red;
+}
+</style>
 
 <style scoped>
 .modal-title {

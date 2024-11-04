@@ -32,6 +32,15 @@
             v-model="nodeData.name"
           />
         </div>
+        <div class="mb-3">
+          <label for="nodeDescription" class="form-label">Description</label>
+          <input
+            type="text"
+            class="form-control"
+            id="nodeDescription"
+            v-model="nodeData.description"
+          />
+        </div>
 
         <!-- Conditional rendering based on node type -->
         <div v-if="nodeData.type === 'sendMessage'">
@@ -42,33 +51,22 @@
             class="mb-3"
           >
             <input type="text" class="form-control" v-model="text.text" />
-            <button
-              type="button"
-              class="btn btn-danger"
-              @click="removeText(index)"
-            >
-              Remove
-            </button>
           </div>
-          <button type="button" class="btn btn-secondary" @click="addText">
-            Add Text
-          </button>
 
           <h6 class="form-heading">Attachments</h6>
           <div v-if="attachments.length">
             <div
               v-for="(attachment, index) in attachments"
               :key="index"
-              class="attachment-preview"
+              class="attachment-preview mb-3"
             >
-              <img :src="attachment.attachment" alt="Attachment" />
-              <button
-                type="button"
-                class="btn btn-danger"
-                @click="removeAttachment(index)"
-              >
-                Remove
-              </button>
+              <img :src="attachment.attachment" alt="Attachment" class="me-2" />
+              <input
+                type="text"
+                class="form-control"
+                :placeholder="`Attachment ${index + 1}`"
+                v-model="attachment.name"
+              />
             </div>
           </div>
           <input type="file" @change="uploadAttachment" />
@@ -85,14 +83,31 @@
 
         <div v-else-if="nodeData.type === 'dateTime'">
           <h6 class="form-heading">Business Hours</h6>
-          <div v-for="(time, index) in nodeData.data.times" :key="index">
-            <input
-              type="text"
-              v-model="time.startTime"
-              placeholder="Start Time"
+          <div
+            v-for="(time, index) in nodeData.data.times"
+            :key="index"
+            class="mb-2 d-flex align-items-center"
+          >
+            <span class="day-label">{{ time.day }}</span>
+            <img
+              src="@/assets/icons/clock.svg"
+              alt="Clock"
+              class="clock-icon"
             />
-            <input type="text" v-model="time.endTime" placeholder="End Time" />
-            <span>{{ time.day }}</span>
+            <div class="time-container">
+              <input
+                type="time"
+                v-model="time.startTime"
+                class="form-control time-input"
+                aria-label="Start Time"
+              />
+              <input
+                type="time"
+                v-model="time.endTime"
+                class="form-control time-input"
+                aria-label="End Time"
+              />
+            </div>
           </div>
         </div>
 
@@ -156,41 +171,44 @@ export default defineComponent({
     }
 
     const updateNode = () => {
+      const { name, description } = nodeData.value
+
+      if (!name || !description) {
+        alert('Title and Description are required!')
+        return
+      }
+
       flowStore.updateNode(nodeData.value)
       hideDrawer()
     }
 
-    const addText = () => {
-      nodeData.value.data.payload.push({ type: 'text', text: '' })
-    }
-
-    const removeText = index => {
-      nodeData.value.data.payload.splice(index, 1)
-    }
-
     const uploadAttachment = event => {
       const file = event.target.files[0]
+
       if (file) {
+        const validTypes = ['image/jpeg', 'image/png', 'application/pdf']
+        if (!validTypes.includes(file.type)) {
+          alert('Invalid file type. Please upload a JPEG, PNG, or PDF file.')
+          return
+        }
+
         const reader = new FileReader()
         reader.onload = e => {
           nodeData.value.data.payload.push({
             type: 'attachment',
             attachment: e.target.result,
+            name: file.name, // Store the name of the attachment
           })
         }
         reader.readAsDataURL(file)
       }
     }
 
-    const removeAttachment = index => {
-      nodeData.value.data.payload = nodeData.value.data.payload.filter(
-        (item, i) => i !== index,
-      )
-    }
-
     const deleteNode = () => {
-      flowStore.deleteNode(nodeData.value.id)
-      hideDrawer()
+      if (confirm('Are you sure you want to delete this node?')) {
+        flowStore.deleteNode(nodeData.value.id)
+        hideDrawer()
+      }
     }
 
     return {
@@ -198,10 +216,7 @@ export default defineComponent({
       iconUrl,
       hideDrawer,
       updateNode,
-      addText,
-      removeText,
       uploadAttachment,
-      removeAttachment,
       deleteNode,
       attachments,
     }
@@ -250,10 +265,40 @@ export default defineComponent({
   margin-right: 10px;
 }
 
+.clock-icon {
+  width: 16px;
+  height: 16px;
+  margin: 0 10px; /* Space between icon and inputs */
+}
+
+.time-container {
+  display: flex;
+  align-items: center; /* Center align inputs vertically */
+  justify-content: flex-start; /* Align to the start */
+  gap: 1px; /* Space between the two input fields */
+  flex-grow: 1; /* Allow this container to grow */
+}
+
+.day-label {
+  flex-basis: 40px; /* Fixed width for day labels */
+  text-align: left; /* Left align day labels */
+}
+
+.time-input {
+  width: 100px; /* Set input fields to a consistent width */
+  padding: 5px; /* Add some padding for better usability */
+  margin-right: 20px;
+}
+
 .button-group {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  gap: 20px; /* Space between buttons */
+  justify-content: center; /* Center buttons horizontally */
+  align-items: center; /* Center buttons vertically */
+  margin: 20px 0; /* Space above and below the button group */
+}
+
+.btn {
+  padding: 10px 20px; /* Add padding to buttons for more space inside */
 }
 </style>

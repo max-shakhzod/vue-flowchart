@@ -47,10 +47,57 @@ export default {
     },
   },
   methods: {
-    openCreateNodeModal(payload) {
-      console.log('Parent ID from TriggerNode:', payload.parentId) // Check if payload has parentId
-      this.$emit('open-create-node-modal', payload)
+    openCreateNodeModal() {
+      console.log('Parent ID from TriggerNode:', this.parentId)
+      this.$emit('open-create-node-modal', { parentId: this.parentId })
     },
   },
 }
 </script>
+
+<!-- <style scoped>
+.node-wrapper {
+  position: relative; /* Allows absolute positioning of connection points */
+}
+.node-container {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+}
+.node-header {
+  display: flex;
+  align-items: center;
+}
+.node-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+.node-title {
+  font-weight: bold;
+}
+.node-description {
+  margin-top: 8px;
+}
+.connection-point {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #007bff;
+  border-radius: 50%;
+}
+.connection-point.left {
+  left: -5px; /* Adjust as necessary */
+  top: 50%;
+  transform: translateY(-50%);
+}
+.connection-point.right {
+  right: -5px; /* Adjust as necessary */
+  top: 50%;
+  transform: translateY(-50%);
+}
+.add-button {
+  margin-top: 10px;
+}
+</style> -->

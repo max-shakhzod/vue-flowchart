@@ -8,6 +8,7 @@
           src="@/assets/icons/message-icon.svg"
           alt="Message Icon"
           class="node-icon"
+          aria-hidden="true"
         />
         <span class="node-title">{{ title }}</span>
       </div>
@@ -18,15 +19,16 @@
           <img :src="attachment" alt="Attachment" class="attachment-image" />
         </template>
         <template v-else>
-          {{ description }}
+          <p>{{ description }}</p>
         </template>
       </div>
     </div>
-    <!-- Add the "+" button below the Send Message node -->
+
     <AddNodeButton
       :parentId="validParentId"
       @open-modal="openCreateNodeModal"
       class="add-button"
+      aria-label="Add a new node"
     />
   </div>
 </template>
@@ -45,15 +47,14 @@ export default defineComponent({
       required: true,
     },
   },
-
   computed: {
     title() {
-      const nodeName = this.data.name
+      const nodeName = this.data.name || 'Default Message Title'
       return nodeName === 'Away Message'
         ? 'Away Message'
         : nodeName === 'Welcome Message'
           ? 'Welcome Message'
-          : 'Default Message Title'
+          : nodeName
     },
     description() {
       const textMessages =
@@ -70,18 +71,14 @@ export default defineComponent({
       return attachmentItem ? attachmentItem.attachment : null
     },
     validParentId() {
-      // Check if data.id is valid; return -1 if not
-      return this.data.id !== undefined && this.data.id !== null
-        ? this.data.id
-        : -1
+      return this.data.id != null ? this.data.id : -1
     },
   },
-
   methods: {
     openCreateNodeModal() {
       const parentId = this.validParentId
       console.log('SendMessageNode parentId:', parentId)
-      this.$emit('open-create-node-modal', { parentId })
+      this.$emit('open-modal', parentId)
     },
   },
 })

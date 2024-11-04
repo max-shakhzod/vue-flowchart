@@ -1,5 +1,6 @@
 <!-- src/components/nodes/AddCommentNode.vue -->
 
+<!-- src/components/nodes/AddCommentNode.vue -->
 <template>
   <div class="node-wrapper">
     <div class="node-container">
@@ -12,11 +13,8 @@
         <span class="node-title">{{ title }}</span>
       </div>
       <hr />
-      <div class="node-description">
-        {{ data.comment }}
-      </div>
+      <div class="node-description">{{ data.comment }}</div>
     </div>
-    <!-- Add the "+" button below the Add Comment node -->
     <AddNodeButton
       :parentId="validParentId"
       @open-modal="openCreateNodeModal"
@@ -27,33 +25,26 @@
 
 <script>
 import { defineComponent } from 'vue'
-import AddNodeButton from './AddNodeButton.vue' // Import the AddNodeButton component
+import AddNodeButton from './AddNodeButton.vue'
 
 export default defineComponent({
-  components: {
-    AddNodeButton,
-  },
+  components: { AddNodeButton },
   props: {
     data: {
       type: Object,
-      required: true, // Ensure data is required
+      required: true,
     },
   },
   computed: {
     title() {
-      return this.data.name || 'Default Comment Title' // Fallback title
+      return this.data.name || 'Default Comment Title'
     },
     validParentId() {
-      // Check if data.id is valid; return -1 if not
-      return this.data.id !== undefined && this.data.id !== null
-        ? this.data.id
-        : -1
+      return this.data.id ?? -1
     },
   },
   methods: {
-    openCreateNodeModal() {
-      const parentId = this.validParentId
-      console.log('AddCommentNode parentId:', parentId)
+    openCreateNodeModal({ parentId }) {
       this.$emit('open-create-node-modal', { parentId }) // Emit event with parentId
     },
   },

@@ -41,10 +41,10 @@ export default {
     },
   },
   methods: {
-    openCreateNodeModal() {
-      const parentId = this.validParentId
-      console.log('DateTimeConnectorNode parentId:', parentId)
-      this.$emit('open-create-node-modal', { parentId })
+    openCreateNodeModal(parentId) {
+      console.log('Opening modal with parentId:', parentId)
+      this.currentParentId = parentId
+      this.showModal = true
     },
   },
 }

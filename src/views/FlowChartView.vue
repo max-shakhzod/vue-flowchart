@@ -2,12 +2,23 @@
 
 <template>
   <div class="flow-chart-container">
+    <div class="flow-chart-header">
+      <button
+        type="button"
+        class="btn btn-primary mb-3"
+        @click="openCreateNodeModal({ parentId: null })"
+      >
+        Create New Node
+      </button>
+    </div>
+
     <div class="flow-chart-view">
       <vue-flow
         @node-click="openDrawer"
         @nodeDragStart="onNodeDrag"
         @nodeDrag="onNodeDrag"
         @nodeDragStop="onNodeDrag"
+        @connect="onConnect"
         :nodes="nodes"
         :edges="edges"
         :node-types="nodeTypes"
@@ -18,15 +29,12 @@
       </vue-flow>
     </div>
 
-    <!-- Create Node Modal -->
     <CreateNodeModal
       :show="showCreateNodeModal"
       @close="showCreateNodeModal = false"
       @create="handleCreateNode"
-      :parentId="currentParentId"
     />
 
-    <!-- Node Details Drawer -->
     <NodeDetailsDrawer
       v-if="selectedNodeId"
       :show="showNodeDrawer"
@@ -63,8 +71,6 @@ export default defineComponent({
     const showCreateNodeModal = ref(false)
     const showNodeDrawer = ref(false)
     const selectedNodeId = ref(null)
-    const currentParentId = ref(null)
-
     const flowStore = useFlowStore()
 
     const nodeTypes = {
@@ -86,14 +92,18 @@ export default defineComponent({
     }
 
     onMounted(() => {
-      flowStore.loadElements()
-      updateNodesAndEdges(flowStore.elements)
+      if (flowStore.loadElements) {
+        flowStore.loadElements()
+        updateNodesAndEdges(flowStore.elements || [])
+      } else {
+        console.error('flowStore.loadElements is not defined')
+      }
     })
 
     watch(
       () => flowStore.elements,
       newElements => {
-        updateNodesAndEdges(newElements)
+        updateNodesAndEdges(newElements || [])
       },
       { immediate: true },
     )
@@ -119,22 +129,42 @@ export default defineComponent({
     function handleCreateNode(newNode) {
       flowStore.addNode(newNode)
       updateNodesAndEdges(flowStore.elements)
+
+      if (newNode.parentId) {
+        edges.value.push({
+          id: `e${newNode.parentId}-${newNode.id}`,
+          source: newNode.parentId.toString(),
+          target: newNode.id,
+          animated: true,
+        })
+      }
     }
 
     const onNodeDrag = event => {
       console.log('Node is being dragged:', event)
     }
 
+    const onConnect = ({ source, target }) => {
+      if (source && target) {
+        edges.value.push({
+          id: `e${source}-${target}`,
+          source,
+          target,
+          animated: true,
+        })
+      } else {
+        console.warn('Invalid connection:', source, target)
+      }
+    }
+
     const openDrawer = ({ node }) => {
-      // Open the drawer only for specific node types: SendMessage, AddComment, BusinessHours
       if (['sendMessage', 'addComment', 'dateTime'].includes(node.type)) {
         selectedNodeId.value = node.id
         showNodeDrawer.value = true
       }
     }
 
-    const openCreateNodeModal = parentId => {
-      currentParentId.value = parentId || null // Set it directly
+    const openCreateNodeModal = () => {
       showCreateNodeModal.value = true
     }
 
@@ -142,14 +172,14 @@ export default defineComponent({
       nodes,
       edges,
       nodeTypes,
-      onNodeDrag,
       showCreateNodeModal,
       showNodeDrawer,
       selectedNodeId,
       openDrawer,
       handleCreateNode,
       openCreateNodeModal,
-      currentParentId,
+      onNodeDrag,
+      onConnect,
     }
   },
 })
@@ -162,6 +192,13 @@ export default defineComponent({
   width: 100%;
   height: 100vh;
   background-color: #fbfbfb;
+}
+
+.flow-chart-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
 }
 
 .flow-chart-view {

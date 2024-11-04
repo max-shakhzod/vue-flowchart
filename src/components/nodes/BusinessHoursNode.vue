@@ -13,40 +13,40 @@
       </div>
       <hr />
       <div class="node-description">
-        {{ formattedBusinessHours }}
+        <img
+          src="@/assets/icons/clock.svg"
+          alt="Clock Icon"
+          class="clock-icon"
+        />
+        {{ formattedTodayHours }}
       </div>
     </div>
-    <!-- Add the "+" button below the Business Hours node -->
-    <AddNodeButton
-      :parentId="validParentId"
-      @open-modal="openCreateNodeModal"
-      class="add-button"
-    />
   </div>
 </template>
 
 <script>
-import AddNodeButton from './AddNodeButton.vue' // Import the AddNodeButton component
-
 export default {
-  components: {
-    AddNodeButton,
-  },
   props: {
     data: {
       type: Object,
-      required: true, // Ensure data is required
+      required: true,
     },
   },
 
   computed: {
-    formattedBusinessHours() {
-      return this.data.times
-        .map(time => `${time.day}: ${time.startTime} - ${time.endTime}`)
-        .join(', ')
+    formattedTodayHours() {
+      const daysOfWeek = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+      const today = daysOfWeek[new Date().getDay()]
+      const todayHours = this.data.times.find(time => time.day === today)
+
+      if (todayHours) {
+        return `${todayHours.day.charAt(0).toUpperCase() + todayHours.day.slice(1)}
+          ${todayHours.startTime} - ${todayHours.endTime} UTC`
+      } else {
+        return 'Closed today'
+      }
     },
     validParentId() {
-      // Check if data.id is valid; return -1 if not
       return this.data.id !== undefined && this.data.id !== null
         ? this.data.id
         : -1
@@ -57,8 +57,16 @@ export default {
     openCreateNodeModal() {
       const parentId = this.validParentId
       console.log('BusinessHoursNode parentId:', parentId)
-      this.$emit('open-modal', { parentId }) // Emit event with parentId
+      this.$emit('open-modal', { parentId })
     },
   },
 }
 </script>
+
+<style scoped>
+.clock-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+}
+</style>
