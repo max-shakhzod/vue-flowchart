@@ -1,7 +1,5 @@
 <!-- src/components/nodes/BusinessHoursNode.vue -->
 
-src="@/assets/icons/datetime-icon.svg"
-
 <template>
   <div class="node-wrapper">
     <div class="node-container">

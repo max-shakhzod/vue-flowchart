@@ -18,6 +18,7 @@
       </vue-flow>
     </div>
 
+    <!-- Create Node Modal -->
     <CreateNodeModal
       :show="showCreateNodeModal"
       @close="showCreateNodeModal = false"
@@ -25,6 +26,7 @@
       :parentId="currentParentId"
     />
 
+    <!-- Node Details Drawer -->
     <NodeDetailsDrawer
       v-if="selectedNodeId"
       :show="showNodeDrawer"
@@ -124,11 +126,8 @@ export default defineComponent({
     }
 
     const openDrawer = ({ node }) => {
-      if (node.type === 'trigger') {
-        openCreateNodeModal(node.id) // Pass the trigger node's ID directly
-      } else if (node.type === 'sendMessage' || node.type === 'addComment') {
-        return // Do not open the modal for these node types
-      } else {
+      // Open the drawer only for specific node types: SendMessage, AddComment, BusinessHours
+      if (['sendMessage', 'addComment', 'dateTime'].includes(node.type)) {
         selectedNodeId.value = node.id
         showNodeDrawer.value = true
       }
